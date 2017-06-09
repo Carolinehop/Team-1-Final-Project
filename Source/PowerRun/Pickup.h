@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "PlayerRunner.h"
 #include "Pickup.generated.h"
 
 UCLASS()
@@ -14,35 +15,72 @@ public:
 	// Sets default values for this actor's properties
 	APickup();
 
-	/** Return the mesh  for the pickup */
-	FORCEINLINE class UStaticMeshComponent* GetMesh() const { return PickupMesh; }
 
-	/** Return whether or not the pickup is active*/
-	UFUNCTION(BlueprintPure, Category = "Pickup")
-	bool IsActive();
-
-	/** Allows other classes to safely change wheter or not pickup is active*/
-	UFUNCTION(BlueprintCallable, Category = "Pickup")
-	void SetActive(bool NewPickupState);
-
-	/** Function to call when the pickup is collected */
-	UFUNCTION(BlueprintNativeEvent)
-	void WasCollected();
-
-	virtual void WasCollected_Implementation();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	/** True when the pickup can be used, and false when pickup is deactivated */
-	bool bIsActive;
 
-private:
-	/** Static mesh to represent the pickup in the level*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pickup", meta = (AllowPrivateAccess = "true"))
-	class UStaticMeshComponent* PickupMesh;
 
-	
+
+public:	
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+
+	// root component for Pickup
+	UPROPERTY(EditAnywhere)
+		USceneComponent* PickupRoot;
+
+	// mesh component for Pickup
+	UPROPERTY(EditAnywhere)
+		UStaticMeshComponent* PickupMesh;
+
+	// box component for Pickup
+	UPROPERTY(EditAnywhere)
+		UBoxComponent* PickupBox;
+
+	// one of two conditions to pick up
+	bool bIsInPickupBox;
+
+	// PlayerRunner object who is assigned the playercharacter so the second condition can be accessed
+	UPROPERTY(EditAnywhere)
+	APlayerRunner* Player;
+
+	// weight of the pickup item
+	float PickupWeight;
+
+	// activates on trigger enter
+	UFUNCTION()
+	void OnEnterPickupBox(class UPrimitiveComponent* HitComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+
+	// activates on trigger exit
+	UFUNCTION()
+	void OnExitPickupBox(class UPrimitiveComponent* HitComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	// Activates item and utilizes its unique functionality on the Player
+	UFUNCTION(BlueprintCallable, Category = "Pickup")
+	virtual void Activate(AActor* OtherActor);
+
+	// assigns player character to PlayerRunner variable
+	UFUNCTION(BlueprintCallable, Category = "Pickup")
+	void GetPlayer(AActor* OtherActor);
+
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/Eric
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup")
+	FString PickupName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup")
+	UTexture2D* PickupImage;
+<<<<<<< HEAD
+=======
+=======
+	FString PickupName;
+>>>>>>> origin/Eric
+>>>>>>> origin/Eric
 	
 };

@@ -2,7 +2,7 @@
 
 #include "PowerRun.h"
 #include "PowerRunGameMode.h"
-#include "PlayerRunner.h"
+#include "PowerRunCharacter.h"
 
 APowerRunGameMode::APowerRunGameMode()
 {

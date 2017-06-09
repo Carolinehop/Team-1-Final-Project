@@ -2,20 +2,37 @@
 
 #include "PowerRun.h"
 #include "Pickup.h"
+#include "PlayerInventory.h"
+#include "PlayerRunner.h"
+#include "Engine.h"
+
 
 
 // Sets default values
 APickup::APickup()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
-	
-	//All pickups start active
-	bIsActive = true;
+	PrimaryActorTick.bCanEverTick = true;
 
-	// Create the static mesh component
+	PickupName = "";
+	PickupWeight = 0.0f;
+
+	// creates a component to be the root of the pickup Actor, sets it to rootcomponent
+	PickupRoot = CreateDefaultSubobject<USceneComponent>(TEXT("PickupRoot"));
+	RootComponent = PickupRoot;
+
+	// creates a mesh for the Actor and attaches it to the rootcomponent
 	PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PickupMesh"));
-	RootComponent = PickupMesh;
+	PickupMesh->AttachToComponent(PickupRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+	PickupBox = CreateDefaultSubobject<UBoxComponent>(TEXT("PickupBox"));
+
+	// create overlap trigger and call trigger function on enter
+	PickupBox->bGenerateOverlapEvents = true;
+	PickupBox->OnComponentBeginOverlap.AddDynamic(this, &APickup::OnEnterPickupBox);
+	PickupBox->OnComponentEndOverlap.AddDynamic(this, &APickup::OnExitPickupBox);
+	PickupBox->AttachToComponent(PickupRoot, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
 
 }
 
@@ -23,24 +40,66 @@ APickup::APickup()
 void APickup::BeginPlay()
 {
 	Super::BeginPlay();
+
+	PickupMesh->SetSimulatePhysics(true);
+
+	bIsInPickupBox = false;
 	
 }
 
-//returns active state
-bool APickup::IsActive()
+// Called every frame
+void APickup::Tick(float DeltaTime)
 {
-	return bIsActive;
+	Super::Tick(DeltaTime);
+
+	if (GEngine)
+	{
+		if (Player)
+		{
+			// It will check that the two conditions are met in order to pick up an item
+			if (bIsInPickupBox && Player->bPickingUpItem)
+			{
+				// Adds item to inventory
+				Player->Inventory->AddToInventory(this);
+			
+			}
+		}
+	}
 }
 
-//sets active state
-void APickup::SetActive(bool NewPickupState)
+// Assigns the PlayerRunner to a variable so its public functions can be accessed
+void APickup::GetPlayer(AActor* OtherActor)
 {
-	bIsActive = NewPickupState;
+	Player = Cast<APlayerRunner>(OtherActor);
+
 }
 
-void APickup::WasCollected_Implementation()
+// Assigns true to one condition, and assigns the entering Actor to variable
+void APickup::OnEnterPickupBox(UPrimitiveComponent * HitComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
-	//Log a debug message
-	FString PickupDebugString = GetName();
-	UE_LOG(LogClass, Log, TEXT("You have collected %s"), *PickupDebugString);
+	bIsInPickupBox = true;
+	GetPlayer(OtherActor);
+	
 }
+
+// Returns the condition to false when the item is picked up or when player chooses not to pick it up and leaves
+void APickup::OnExitPickupBox(class UPrimitiveComponent* HitComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	bIsInPickupBox = false;
+}
+
+// function that gets overriden by pickup-specific activation functionality
+void APickup::Activate(AActor* OtherActor)
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Nothing happened."));
+	}
+
+}
+
+
+
+
+
+
